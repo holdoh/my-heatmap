@@ -2,20 +2,69 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>호랑의 투자 종목 히트맵</title>
+    <title>호랑의 투자 종목 히트맵 (Market Temperature Edition)</title>
     <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
     <style>
+        @import url('https://webfontworld.github.io/gmarket/GmarketSans.css');
         @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
+        
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; overflow: hidden; font-family: 'Pretendard', sans-serif; }
-        #title-bar { width: 100%; height: 40px; line-height: 40px; text-align: center; color: #e0e0e0; font-size: 19px; font-weight: 800; background: #111; border-bottom: 1px solid #222; position: relative; z-index: 10; }
-        #heatmap { width: 100vw; height: calc(100vh - 40px); margin-top: -30px; display: block; }
-        #footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 25px; background: rgba(10, 10, 10, 0.9); backdrop-filter: blur(5px); border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; color: #666; font-size: 11px; z-index: 100; font-variant-numeric: tabular-nums; box-sizing: border-box; }
-        .status-group { display: flex; align-items: center; gap: 25px; }
-        .highlight { color: #888; font-weight: 600; margin-left: 4px; }
+        
         #flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: white; opacity: 0; pointer-events: none; z-index: 9999; }
         .flash-active { animation: flash-ani 0.4s ease-out; }
         @keyframes flash-ani { 0% { opacity: 0.3; } 100% { opacity: 0; } }
-        /* SOXL 주황색 깜빡이 */
+
+        /* --- 타이틀 바 기본 스타일 --- */
+        #title-bar { 
+            width: 100%; height: 40px; line-height: 40px; text-align: center; 
+            font-size: 20px; font-weight: 900; font-family: 'GmarketSans', sans-serif;
+            background: #111; border-bottom: 2px solid rgba(255,255,255,0.1); 
+            position: relative; z-index: 10; transition: all 0.8s ease;
+            letter-spacing: 2px; box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+        }
+
+        /* [일반 상승] */
+        .title-bull { background: linear-gradient(to bottom, #8b0000 0%, #300000 100%) !important; color: #fff; }
+        /* [일반 하락] */
+        .title-bear { background: linear-gradient(to bottom, #00008b 0%, #000030 100%) !important; color: #fff; }
+
+        /* [특수: 🔥 불장 테마 (+3% 이상)] */
+        .title-super-bull { 
+            background: linear-gradient(45deg, #ff0000, #ff8c00, #ff0000) !important;
+            background-size: 200% 200% !important;
+            animation: fire-ani 3s ease infinite;
+            color: #fff; text-shadow: 0 0 10px #ffff00, 0 0 20px #ff4d4d;
+            border-bottom: 3px solid #ffd700 !important; /* 금색 테두리 */
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        }
+        @keyframes fire-ani { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        /* [특수: ❄️ 빙하기 테마 (-3% 이하)] */
+        .title-super-bear { 
+            background: linear-gradient(45deg, #00008b, #00d2ff, #00008b) !important;
+            background-size: 200% 200% !important;
+            animation: ice-ani 4s ease infinite;
+            color: #fff; text-shadow: 0 0 10px #ffffff, 0 0 20px #0072ff;
+            border-bottom: 3px solid #e0ffff !important; /* 서늘한 하늘색 테두리 */
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.6);
+        }
+        @keyframes ice-ani { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        /* --- 나머지 스타일 기존 유지 --- */
+        #ticker-container { position: fixed; bottom: 25px; left: 0; width: 100%; height: 28px; background: rgba(20, 20, 20, 0.9); backdrop-filter: blur(5px); border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; overflow: hidden; z-index: 100; }
+        #ticker-wrapper { display: inline-block; white-space: nowrap; animation: ticker-kf 90s linear infinite; color: #aaa; font-size: 13px; font-weight: 500; }
+        .ticker-item { display: inline-block; margin-right: 80px; }
+        .ticker-val { color: #fff; font-weight: 700; }
+        .ticker-hl { color: #FFFF00; font-weight: 700; }
+        .ticker-mint { color: #00ffcc; font-weight: 700; }
+        .up { color: #FF3131 !important; font-weight: 800; text-shadow: 0 0 5px rgba(255, 49, 49, 0.5); }
+        .down { color: #00D2FF !important; font-weight: 800; text-shadow: 0 0 5px rgba(0, 210, 255, 0.5); }
+        @keyframes ticker-kf { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-50%, 0, 0); } }
+        #heatmap { width: 100vw; height: calc(100vh - 65px); margin-top: -30px; display: block; }
+        #footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 25px; background: #0a0a0a; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; color: #666; font-size: 11px; z-index: 101; box-sizing: border-box; }
+        .status-group { display: flex; gap: 20px; align-items: center; }
+        .highlight { color: #aaa; font-weight: 600; margin-left: 4px; }
+        .accent { color: #00ffcc; font-weight: 700; }
         @keyframes orange-pulse { 0% { stroke: #FF8C00; stroke-width: 6; } 50% { stroke: #FFCC33; stroke-width: 10; } 100% { stroke: #FF8C00; stroke-width: 6; } }
         path[style*="stroke: rgb(255, 140, 0)"], path[style*="stroke: #ff8c00"] { animation: orange-pulse 1.5s infinite ease-in-out !important; }
     </style>
@@ -24,24 +73,43 @@
     <div id="flash-overlay"></div> 
     <div id="title-bar">호랑의 투자 종목 히트맵</div>
     <div id="heatmap"></div>
+    
+    <div id="ticker-container">
+        <div id="ticker-wrapper" style="font-family: 'Pretendard';">
+            <span class="ticker-item">데이터 분석 및 티커 최적화 중...</span>
+        </div>
+    </div>
+
     <div id="footer">
         <div class="status-group">
-            <div id="status-text">🔈 <span class="highlight">클릭 시 사운드 / 종목 클릭 시 차트</span></div>
-            <div id="coin-status">🔄 <span class="highlight">코인 연결 중...</span></div>
+            <div id="status-text">🔈 <span class="highlight">화면 클릭 시 사이렌 활성화</span></div>
+            <div>⚡ <span class="highlight">실시간 티커 가동 중</span></div>
         </div>
-        <div id="last-update">✅ <span id="update-time" class="highlight">로딩 중...</span></div>
+        <div class="status-group">
+            <div id="coin-status">🔄 <span class="highlight">코인 실시간 반영 중 (<span class="accent">20초</span>)</span></div>
+            <div id="sheet-status">📡 <span class="highlight">전체 데이터 갱신 중 (<span class="accent">60초</span>)</span></div>
+            <div id="last-update">✅ <span id="update-time" class="highlight">로딩 중...</span></div>
+        </div>
     </div>
 
     <script>
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSWbS7DD4dE4LUIcVrz8JeeG5BNpq6Fd8ZXPDYP0UD2iGNpF8j74aV3NaARkjwSYIxAwOlVML-0CE-Z/pub?gid=0&single=true&output=csv';
         let currentData = { l: [], c: [], v: [], bc: [], bw: [], fc: [], n: [], t: [] };
         let liveCoinStore = { "비트코인": { p: 0, c: 0 }, "이더리움": { p: 0, c: 0 }, "리플": { p: 0, c: 0 } };
-        let sirenToggle = false; let sirenInterval = null; let audioCtx = null; let isMutedByClick = false;
+        let fgiText = "로딩 중..."; 
+        let audioCtx = null; 
+        let isMutedByClick = true; 
+        let sirenToggle = false;
+        let sirenInterval = null;
+
+        const hourlyWits = ["주식은 내리는데 내 혈압은 오르네. 🐯", "내 주식만 안 오르는 건 기분 탓이 아니라 과학입니다.", "한강물 온도는 체크하지 마세요.", "익절은 언제나 옳다.", "물타기 하다가 수영 선수가 되게 생겼습니다.", "지구는 푸른 행성, 내 계좌도 푸른색.", "내가 팔면 오르고 내가 사면 내리고.", "상한가 한 번만 먹어보고 싶다.", "빨간색만 보면 가슴이 뜁니다.", "시장이 저를 안 보내주네요."];
+        const investmentQuotes = ["가격은 지불하는 것, 가치는 얻는 것.", "탐욕을 부릴 때 두려워하라.", "제1원칙은 돈을 잃지 않는 것.", "인내심은 부를 옮기는 도구다.", "위험은 무지에서 온다.", "10년 소유할 게 아니라면 사지 마라.", "감정을 다스리는 게임이다.", "남들이 던질 때 사라.", "변동성을 친구로 보라.", "투자는 엉덩이로 하는 것이다."];
 
         function playTone(freq, duration, vol) {
             if (!audioCtx || isMutedByClick) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
             osc.type = 'sine'; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
             gain.gain.setValueAtTime(vol, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
@@ -49,16 +117,33 @@
             osc.start(); osc.stop(audioCtx.currentTime + duration);
         }
 
-        window.addEventListener('mousedown', (e) => {
-            if (e.target.closest('#heatmap')) return;
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                document.getElementById('status-text').innerHTML = "🔊 <span class='highlight'>사운드 온라인</span>";
-            } else {
-                isMutedByClick = !isMutedByClick;
-                document.getElementById('status-text').innerHTML = isMutedByClick ? "🔇 <span class='highlight'>정지 (다음 업데이트 시 해제)</span>" : "🔊 <span class='highlight'>사운드 온라인</span>";
+        function startSirenCheck() {
+            if (sirenInterval) clearInterval(sirenInterval);
+            if (currentData.c.some(v => Math.abs(v) >= 10.0)) {
+                sirenInterval = setInterval(() => {
+                    sirenToggle = !sirenToggle;
+                    renderHeatmap(true);
+                    playTone(sirenToggle ? 880 : 440, 0.4, 0.05);
+                }, 500);
+            } else { renderHeatmap(false); }
+        }
+
+        function formatTickerVal(val) { return val?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") || ""; }
+
+        function parseCSVLine(line) {
+            const result = []; let current = ''; let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+                else current += char;
             }
-        });
+            result.push(current.trim()); return result;
+        }
+
+        async function fetchFGI() {
+            try { const res = await fetch("https://api.alternative.me/fng/"); const data = await res.json(); fgiText = data.data[0].value; } catch (e) { fgiText = "연결 지연"; }
+        }
 
         async function fetchCoins() {
             try {
@@ -68,44 +153,26 @@
                     let n = coin.market === "KRW-BTC" ? "비트코인" : coin.market === "KRW-ETH" ? "이더리움" : "리플";
                     liveCoinStore[n] = { p: coin.trade_price, c: coin.signed_change_rate * 100 };
                 });
-                if (currentData.l.length > 0) updateRealtimeUI();
-                document.getElementById('coin-status').innerHTML = "⚡ <span class='highlight'>코인 실시간 반영 중(20초)</span>";
+                if (currentData.l.length > 0) renderHeatmap(false);
             } catch (e) {}
-        }
-
-        function updateRealtimeUI() {
-            let changed = false;
-            for (let i = 0; i < currentData.l.length; i++) {
-                if (["비트코인", "이더리움", "리플"].some(coin => currentData.l[i].includes(coin))) {
-                    let target = currentData.l[i].includes("비트코인") ? "비트코인" : currentData.l[i].includes("이더리움") ? "이더리움" : "리플";
-                    let p = liveCoinStore[target].p; let c = liveCoinStore[target].c;
-                    if (p === 0) continue; 
-                    let updatedLabel = `<b>${target}</b><br>₩${p.toLocaleString()}<br>${c.toFixed(2)}%`;
-                    if (currentData.l[i] !== updatedLabel) {
-                        currentData.l[i] = updatedLabel; currentData.c[i] = c;
-                        currentData.fc[i] = "#FFFF00"; // 코인은 항상 노란색 유지
-                        changed = true;
-                    }
-                }
-            }
-            if (changed) renderHeatmap(false);
         }
 
         async function fetchData() {
             try {
                 const response = await fetch(SHEET_URL + '&cb=' + Date.now());
                 const csvText = await response.text();
-                const rows = csvText.split(/\r?\n/).filter(line => line.trim() !== "").map(line => line.split(','));
+                const rawRows = csvText.split(/\r?\n/).filter(line => line.trim() !== "");
+                const rows = rawRows.map(line => parseCSVLine(line));
+                
                 let nextL = [], nextC = [], nextV = [], nextBC = [], nextBW = [], nextFC = [], nextN = [], nextT = [];
-                isMutedByClick = false;
+                let gColumnData = rows.map(r => ({ g: r[6]?.replace(/"/g, "").trim() || "", h: r[7]?.replace(/"/g, "").trim() || "" }));
 
                 for (let i = 1; i < rows.length; i++) {
-                    const row = rows[i]; if (!row || row.length < 2) continue;
-                    const name = row[0]?.replace(/"/g, "").trim();
-                    const ticker = row[1]?.replace(/"/g, "").trim();
+                    const row = rows[i]; if (!row || !row[0] || row[0] === "종목명") continue;
+                    const name = row[0].replace(/"/g, "").trim();
+                    const ticker = row[1]?.replace(/"/g, "").trim() || "";
                     const priceStr = row[2]?.replace(/"/g, "").trim() || "";
                     const changeStr = row[3]?.replace(/"/g, "").trim() || "";
-                    if (!name) continue;
 
                     let finalP, finalC;
                     if (["비트코인", "이더리움", "리플"].some(coin => name.includes(coin))) {
@@ -116,39 +183,83 @@
                         if (Math.abs(finalC) < 0.1 && changeStr.includes('.')) finalC *= 100;
                         finalP = parseFloat(priceStr.replace(/,/g, ''));
                     }
+
                     let sign = (ticker.toUpperCase().includes('KRX') || /^[0-9]/.test(ticker) || ["비트코인", "리플", "이더리움"].some(n => name.includes(n))) ? "₩" : "$";
-                    
                     nextL.push(`<b>${name}</b><br>${isNaN(finalP) ? priceStr : sign + finalP.toLocaleString()}<br>${finalC.toFixed(2)}%`);
                     nextC.push(finalC);
-                    nextV.push(Math.min(Math.max(Math.abs(finalC), 0.5), 10) + 2);
+                    nextV.push(Math.max(Math.abs(finalC), 0.5));
                     
-                    // --- 글자색 로직 수정 (KB금융 오작동 방지) ---
-                    let fColor = finalC > 0.5 ? "#FFDADA" : (finalC < -0.5 ? "#DADAFF" : "#FFFFFF");
-                    const targetYellowItems = ["SOXL", "MAGS", "S&P 500", "QQQ", "RUSSELL 2000", "WPAY", "비트코인", "이더리움", "리플"];
-                    const strictYellowItems = ["금", "은"]; // 이름이 완전히 일치할 때만 적용
+                    const isGoldSilverExact = (name === "금" || name === "은");
+                    const isSpecialYellow = ["비트코인", "이더리움", "리플", "MAGS", "QQQ", "RUSSELL 2000", "S&P 500", "SOXL", "WPAY"].some(n => name.includes(n));
                     
-                    if (targetYellowItems.some(n => name.includes(n)) || strictYellowItems.includes(name)) {
-                        fColor = "#FFFF00";
-                    }
-                    nextFC.push(fColor);
-                    
+                    nextFC.push((isGoldSilverExact || isSpecialYellow) ? "#FFFF00" : (finalC > 0.5 ? "#FFDADA" : (finalC < -0.5 ? "#DADAFF" : "#FFFFFF")));
                     nextN.push(name); nextT.push(ticker);
                     
-                    // --- 테두리 로직 ---
-                    if (["비트코인", "리플", "이더리움"].some(n => name.includes(n))) { nextBC.push("#00FF00"); nextBW.push(6); }
-                    else if (name === "SOXL") { nextBC.push("#FF8C00"); nextBW.push(6); }
-                    else if (name === "금" || name === "은") { nextBC.push("#FFFF00"); nextBW.push(6); }
+                    if (name === "SOXL") { nextBC.push("#FF8C00"); nextBW.push(6); }
+                    else if (["비트코인", "리플", "이더리움"].some(n => n === name)) { nextBC.push("#00FF00"); nextBW.push(6); }
+                    else if (isGoldSilverExact) { nextBC.push("#FFFF00"); nextBW.push(6); }
                     else if (["MAGS", "S&P 500", "QQQ", "RUSSELL 2000", "WPAY"].some(n => name.includes(n))) { nextBC.push("#FFB300"); nextBW.push(6); }
                     else { nextBC.push("#FFFFFF"); nextBW.push(1); }
                 }
 
                 currentData = { l: nextL, c: nextC, v: nextV, bc: nextBC, bw: nextBW, fc: nextFC, n: nextN, t: nextT };
-                renderHeatmap(false);
                 const overlay = document.getElementById('flash-overlay');
                 overlay.classList.remove('flash-active'); void overlay.offsetWidth; overlay.classList.add('flash-active');
+                
                 startSirenCheck();
+                updateTicker(gColumnData); 
+                updateTitleTheme(); // 타이틀 테마 갱신 호출
                 document.getElementById('update-time').innerText = new Date().toLocaleTimeString('ko-KR', { hour12: false }) + " 업데이트";
-            } catch (e) {}
+            } catch (e) { console.error(e); }
+        }
+
+        /* --- 업그레이드된 타이틀 테마 제어 로직 --- */
+        function updateTitleTheme() {
+            if (currentData.c.length === 0) return;
+            const avg = currentData.c.reduce((a, b) => a + b, 0) / currentData.c.length;
+            const titleBar = document.getElementById('title-bar');
+            let baseTitle = "호랑의 투자 종목 히트맵";
+
+            if (avg >= 3.0) {
+                titleBar.className = "title-super-bull";
+                titleBar.innerHTML = `🔥 ${baseTitle} 🔥`;
+            } else if (avg <= -3.0) {
+                titleBar.className = "title-super-bear";
+                titleBar.innerHTML = `❄️ ${baseTitle} ❄️`;
+            } else if (avg > 0) {
+                titleBar.className = "title-bull";
+                titleBar.innerHTML = baseTitle;
+            } else {
+                titleBar.className = "title-bear";
+                titleBar.innerHTML = baseTitle;
+            }
+        }
+
+        function updateTicker(gData) {
+            const wrapper = document.getElementById('ticker-wrapper');
+            const hourIdx = new Date().getHours() % 10;
+            let html = "";
+            html += `<span class="ticker-item">🐯 <span class="ticker-hl">호랑의 투자 원칙 :</span> <span class="ticker-val">장기 투자! 분산 투자! 분할 매수! 적립식 매수! 공포에 사라!</span></span>`;
+            html += `<span class="ticker-item">📜 <span class="ticker-mint">오늘의 격언:</span> <span class="ticker-val">${investmentQuotes[hourIdx]}</span></span>`;
+            html += `<span class="ticker-item">💡 <span class="ticker-mint">오늘의 한마디:</span> <span class="ticker-val">${hourlyWits[hourIdx]}</span></span>`;
+            html += `<span class="ticker-item">🎭 <span class="ticker-label" style="color: #00FF00;">공포 탐욕 지수:</span> <span class="ticker-hl">${formatTickerVal(fgiText)}</span></span>`;
+            
+            const labels = ["USD/KRW", "S&P 500", "다우존스", "나스닥 100", "KODEX 코스피 200", "KODEX 코스닥 150"];
+            for(let i=0; i<6; i++) { 
+                let item = gData[i+5]; if(!item || !item.g) continue;
+                let currP = parseFloat(item.g.replace(/[^0-9.-]+/g, ""));
+                let prevP = parseFloat(item.h.replace(/[^0-9.-]+/g, ""));
+                if(!isNaN(currP) && !isNaN(prevP) && prevP !== 0) {
+                    let diff = currP - prevP; let rate = (diff / prevP) * 100;
+                    let arrow = diff > 0 ? "▲" : (diff < 0 ? "▼" : "-");
+                    let trendClass = diff > 0 ? "up" : (diff < 0 ? "down" : "");
+                    html += `<span class="ticker-item"><span class="ticker-hl">${labels[i]}:</span> <span class="ticker-val">${formatTickerVal(currP)}</span> <span class="${trendClass}" style="margin-left: 3px; font-size: 11px;">${arrow} ${rate.toFixed(2)}%</span></span>`;
+                }
+            }
+            for(let i=0; i<5; i++) { 
+                if(gData[i] && gData[i].g && gData[i].g !== ",") { html += `<span class="ticker-item">📢 <span class="ticker-val">${gData[i].g}</span></span>`; }
+            }
+            wrapper.innerHTML = html + html;
         }
 
         function renderHeatmap(isSirenTick) {
@@ -157,40 +268,43 @@
                 if (Math.abs(val) >= 10.0) return (isSirenTick && sirenToggle) ? (val > 0 ? "#FF0000" : "#0000FF") : val;
                 return val;
             });
+
             Plotly.react('heatmap', [{
                 type: "treemap", labels: currentData.l, parents: Array(currentData.l.length).fill(""), values: currentData.v,
                 hoverinfo: "none", textposition: "middle center", tiling: { pad: 0 },
-                marker: { colors: displayColors, colorscale: [[0, '#1565C0'], [0.45, '#0D47A1'], [0.5, '#000000'], [0.55, '#8B0000'], [1, '#D32F2F']], cmin: -10, cmax: 10, line: { width: currentData.bw, color: currentData.bc } },
-                textinfo: "label", textfont: { size: 17, family: "Pretendard", weight: 800, color: currentData.fc }
+                marker: { 
+                    colors: displayColors, 
+                    colorscale: [[0, '#1565C0'], [0.45, '#0D47A1'], [0.5, '#000000'], [0.55, '#8B0000'], [1, '#D32F2F']], 
+                    cmin: -10, cmax: 10, 
+                    line: { width: currentData.bw, color: currentData.bc } 
+                },
+                textinfo: "label",
+                textfont: { size: 17, family: "Pretendard", weight: 800, color: currentData.fc }
             }], { margin: { t: 0, l: 0, r: 0, b: 0 }, paper_bgcolor: "#000" }, { responsive: true, displayModeBar: false });
         }
 
-        function startSirenCheck() {
-            if (sirenInterval) clearInterval(sirenInterval);
-            if (currentData.c.some(v => Math.abs(v) >= 10.0)) {
-                sirenInterval = setInterval(() => { sirenToggle = !sirenToggle; renderHeatmap(true); playTone(sirenToggle ? 880 : 440, 0.4, 0.05); }, 500);
-            }
-        }
-
         document.getElementById('heatmap').addEventListener('mousedown', function(e) {
-            const gd = document.getElementById('heatmap'); const target = e.target.closest('.slice') || e.target.closest('.text');
-            if (!target) return; e.stopPropagation(); e.stopImmediatePropagation();
+            const target = e.target.closest('.slice') || e.target.closest('.text'); if (!target) return;
             const textContent = target.textContent || ""; let foundIdx = -1;
             for(let i=0; i<currentData.n.length; i++) { if (textContent.includes(currentData.n[i])) { foundIdx = i; break; } }
             if (foundIdx !== -1) {
                 const name = currentData.n[foundIdx]; const ticker = currentData.t[foundIdx]; let url = "";
                 if (name.includes("비트코인")) url = "https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC";
-                else if (name.includes("이더리움")) url = "https://upbit.com/exchange?code=CRIX.UPBIT.KRW-ETH";
-                else if (name.includes("리플")) url = "https://upbit.com/exchange?code=CRIX.UPBIT.KRW-XRP";
-                else if (ticker.includes("KRX") || /^[0-9]{5,6}$/.test(ticker)) { url = `https://www.google.com/finance/quote/${ticker.replace("KRX:", "")}:KRX`; }
-                else { url = `https://www.google.com/search?q=google+finance+${encodeURIComponent(ticker || name)}`; }
+                else if (ticker.includes("KRX") || /^[0-9]{5,6}$/.test(ticker)) url = `https://www.google.com/finance/quote/${ticker.replace("KRX:", "")}:KRX`;
+                else url = `https://www.google.com/search?q=google+finance+${encodeURIComponent(ticker || name)}`;
                 if (url) window.open(url, '_blank');
             }
-            setTimeout(() => { Plotly.relayout(gd, { 'treemapcolorway': null }); }, 10);
         }, true);
 
-        fetchCoins().then(() => fetchData());
-        setInterval(fetchCoins, 20000); setInterval(fetchData, 60000);
+        window.addEventListener('mousedown', (e) => {
+            if (e.target.closest('#heatmap')) return;
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            isMutedByClick = !isMutedByClick;
+            document.getElementById('status-text').innerHTML = isMutedByClick ? "🔇 <span class='highlight'>사이렌 꺼짐</span>" : "🔊 <span class='highlight'>사이렌 가동 중</span>";
+        });
+
+        async function init() { await fetchFGI(); await fetchCoins(); await fetchData(); setInterval(fetchFGI, 300000); setInterval(fetchCoins, 20000); setInterval(fetchData, 60000); }
+        init();
         window.onresize = () => Plotly.Plots.resize('heatmap');
     </script>
 </body>
