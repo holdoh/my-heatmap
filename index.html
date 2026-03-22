@@ -244,8 +244,8 @@
             html += `<span class="ticker-item">💡 <span class="ticker-mint">오늘의 한마디:</span> <span class="ticker-val">${hourlyWits[hourIdx]}</span></span>`;
             html += `<span class="ticker-item">🎭 <span class="ticker-label" style="color: #00FF00;">공포 탐욕 지수:</span> <span class="ticker-hl">${formatTickerVal(fgiText)}</span></span>`;
             
-            const labels = ["USD/KRW", "S&P 500", "다우존스", "나스닥 100", "KODEX 코스피 200", "KODEX 코스닥 150"];
-            for(let i=0; i<6; i++) { 
+            const labels = ["USD/KRW", "S&P 500", "다우존스", "나스닥 100", "KODEX 코스피 200", "KODEX 코스닥 150", "변동성 지수"];
+            for(let i=0; i<7; i++) { 
                 let item = gData[i+6]; if(!item || !item.g) continue;
                 let currP = parseFloat(item.g.replace(/[^0-9.-]+/g, ""));
                 let prevP = parseFloat(item.h.replace(/[^0-9.-]+/g, ""));
