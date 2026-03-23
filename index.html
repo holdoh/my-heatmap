@@ -190,7 +190,7 @@
                     nextV.push(Math.max(Math.abs(finalC), 0.5));
                     
                     const isGoldSilverExact = (name === "금" || name === "은");
-                    const isSpecialYellow = ["비트코인", "이더리움", "리플", "MAGS", "QQQ", "RUSSELL 2000", "S&P 500", "SOXL", "WPAY"].some(n => name.includes(n));
+                    const isSpecialYellow = ["비트코인", "이더리움", "리플", "MAGS", "QQQ", "RUSSELL 2000", "S&P 500", "SOXL", "WPAY", "FNGU"].some(n => name.includes(n));
                     
                     nextFC.push((isGoldSilverExact || isSpecialYellow) ? "#FFFF00" : (finalC > 0.5 ? "#FFDADA" : (finalC < -0.5 ? "#DADAFF" : "#FFFFFF")));
                     nextN.push(name); nextT.push(ticker);
