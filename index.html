@@ -95,7 +95,7 @@
     <script>
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSWbS7DD4dE4LUIcVrz8JeeG5BNpq6Fd8ZXPDYP0UD2iGNpF8j74aV3NaARkjwSYIxAwOlVML-0CE-Z/pub?gid=0&single=true&output=csv';
         let currentData = { l: [], c: [], v: [], bc: [], bw: [], fc: [], n: [], t: [] };
-        let liveCoinStore = { "비트코인": { p: 0, c: 0 }, "이더리움": { p: 0, c: 0 }, "리플": { p: 0, c: 0 } };
+        let liveCoinStore = { "비트코인": { p: 0, c: 0 }, "이더리움": { p: 0, c: 0 }, "리플": { p: 0, c: 0 }, "트론": { p: 0, c: 0 } };
         let fgiText = "로딩 중..."; 
         let audioCtx = null; 
         let isMutedByClick = true; 
@@ -147,10 +147,10 @@
 
         async function fetchCoins() {
             try {
-                const res = await fetch("https://api.upbit.com/v1/ticker?markets=KRW-BTC,KRW-ETH,KRW-XRP");
+                const res = await fetch("https://api.upbit.com/v1/ticker?markets=KRW-BTC,KRW-ETH,KRW-XRP,KRW-TRX");
                 const data = await res.json();
                 data.forEach(coin => {
-                    let n = coin.market === "KRW-BTC" ? "비트코인" : coin.market === "KRW-ETH" ? "이더리움" : "리플";
+                    let n = coin.market === "KRW-BTC" ? "비트코인" : coin.market === "KRW-ETH" ? "이더리움" : coin.market === "KRW-XRP" ? "리플" : "트론";
                     liveCoinStore[n] = { p: coin.trade_price, c: coin.signed_change_rate * 100 };
                 });
                 if (currentData.l.length > 0) renderHeatmap(false);
@@ -175,8 +175,8 @@
                     const changeStr = row[3]?.replace(/"/g, "").trim() || "";
 
                     let finalP, finalC;
-                    if (["비트코인", "이더리움", "리플"].some(coin => name.includes(coin))) {
-                        let t = name.includes("비트코인") ? "비트코인" : name.includes("이더리움") ? "이더리움" : "리플";
+                    if (["비트코인", "이더리움", "리플", "트론"].some(coin => name.includes(coin))) {
+                        let t = name.includes("비트코인") ? "비트코인" : name.includes("이더리움") ? "이더리움" : name.includes("리플") ? "리플" : "트론";
                         finalP = liveCoinStore[t].p; finalC = liveCoinStore[t].c;
                     } else {
                         finalC = parseFloat(changeStr); if (isNaN(finalC)) finalC = 0;
@@ -190,13 +190,13 @@
                     nextV.push(Math.max(Math.abs(finalC), 0.5));
                     
                     const isGoldSilverExact = (name === "금" || name === "은");
-                    const isSpecialYellow = ["비트코인", "이더리움", "리플", "MAGS", "QQQ", "RUSSELL 2000", "S&P 500", "SOXL", "TOPW", "FNGU"].some(n => name.includes(n));
+                    const isSpecialYellow = ["비트코인", "이더리움", "리플", "트론", "MAGS", "QQQ", "RUSSELL 2000", "S&P 500", "SOXL", "TOPW", "FNGU"].some(n => name.includes(n));
                     
                     nextFC.push((isGoldSilverExact || isSpecialYellow) ? "#FFFF00" : (finalC > 0.5 ? "#FFDADA" : (finalC < -0.5 ? "#DADAFF" : "#FFFFFF")));
                     nextN.push(name); nextT.push(ticker);
                     
                     if (name === "SOXL"|| name === "FNGU") { nextBC.push("#FF8C00"); nextBW.push(6); }
-                    else if (["비트코인", "리플", "이더리움"].some(n => n === name)) { nextBC.push("#00FF00"); nextBW.push(6); }
+                    else if (["비트코인", "리플", "이더리움", "트론"].some(n => n === name)) { nextBC.push("#00FF00"); nextBW.push(6); }
                     else if (isGoldSilverExact) { nextBC.push("#FFFF00"); nextBW.push(6); }
                     else if (["MAGS", "S&P 500", "QQQ", "RUSSELL 2000", "TOPW"].some(n => name.includes(n))) { nextBC.push("#FFB300"); nextBW.push(6); }
                     else { nextBC.push("#FFFFFF"); nextBW.push(1); }
