@@ -14,7 +14,6 @@
         .flash-active { animation: flash-ani 0.4s ease-out; }
         @keyframes flash-ani { 0% { opacity: 0.3; } 100% { opacity: 0; } }
 
-        /* --- 타이틀 바 기본 스타일 --- */
         #title-bar { 
             width: 100%; height: 40px; line-height: 40px; text-align: center; 
             font-size: 20px; font-weight: 900; font-family: 'GmarketSans', sans-serif;
@@ -23,34 +22,29 @@
             letter-spacing: 2px; box-shadow: 0 4px 15px rgba(0,0,0,0.8);
         }
 
-        /* [일반 상승] */
         .title-bull { background: linear-gradient(to bottom, #8b0000 0%, #300000 100%) !important; color: #fff; }
-        /* [일반 하락] */
         .title-bear { background: linear-gradient(to bottom, #00008b 0%, #000030 100%) !important; color: #fff; }
 
-        /* [특수: 🔥 불장 테마 (+3% 이상)] */
         .title-super-bull { 
             background: linear-gradient(45deg, #ff0000, #ff8c00, #ff0000) !important;
             background-size: 200% 200% !important;
             animation: fire-ani 3s ease infinite;
             color: #fff; text-shadow: 0 0 10px #ffff00, 0 0 20px #ff4d4d;
-            border-bottom: 3px solid #ffd700 !important; /* 금색 테두리 */
+            border-bottom: 3px solid #ffd700 !important;
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
         }
         @keyframes fire-ani { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        /* [특수: ❄️ 빙하기 테마 (-3% 이하)] */
         .title-super-bear { 
             background: linear-gradient(45deg, #00008b, #00d2ff, #00008b) !important;
             background-size: 200% 200% !important;
             animation: ice-ani 4s ease infinite;
             color: #fff; text-shadow: 0 0 10px #ffffff, 0 0 20px #0072ff;
-            border-bottom: 3px solid #e0ffff !important; /* 서늘한 하늘색 테두리 */
+            border-bottom: 3px solid #e0ffff !important;
             box-shadow: 0 0 20px rgba(0, 210, 255, 0.6);
         }
         @keyframes ice-ani { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        /* --- 나머지 스타일 기존 유지 --- */
         #ticker-container { position: fixed; bottom: 25px; left: 0; width: 100%; height: 28px; background: rgba(20, 20, 20, 0.9); backdrop-filter: blur(5px); border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; overflow: hidden; z-index: 100; }
         #ticker-wrapper { display: inline-block; white-space: nowrap; animation: ticker-kf 90s linear infinite; color: #aaa; font-size: 13px; font-weight: 500; }
         .ticker-item { display: inline-block; margin-right: 80px; }
@@ -180,7 +174,12 @@
                         finalP = liveCoinStore[t].p; finalC = liveCoinStore[t].c;
                     } else {
                         finalC = parseFloat(changeStr); if (isNaN(finalC)) finalC = 0;
-                        if (Math.abs(finalC) < 0.1 && changeStr.includes('.')) finalC *= 100;
+                        
+                        // [수정된 로직] 기준값을 1.0으로 조정하여 0.14(14%) 등을 정상 인식하도록 함
+                        if (Math.abs(finalC) < 1.0 && changeStr.includes('.')) {
+                            finalC *= 100;
+                        }
+                        
                         finalP = parseFloat(priceStr.replace(/,/g, ''));
                     }
 
@@ -198,7 +197,7 @@
                     if (name === "SOXL"|| name === "FNGU") { nextBC.push("#FF8C00"); nextBW.push(6); }
                     else if (["비트코인", "리플", "이더리움", "트론"].some(n => n === name)) { nextBC.push("#00FF00"); nextBW.push(6); }
                     else if (isGoldSilverExact) { nextBC.push("#FFFF00"); nextBW.push(6); }
-                    else if (["MAGS", "S&P 500", "QQQ", "RUSSELL 2000", "TOPW"].some(n => name.includes(n))) { nextBC.push("#FFB300"); nextBW.push(6); }
+                    else if (["MAGS", "S&P 500", "QQQ", "RUSSELL 2000", "TOPW"].some(nameContains => name.includes(nameContains))) { nextBC.push("#FFB300"); nextBW.push(6); }
                     else { nextBC.push("#FFFFFF"); nextBW.push(1); }
                 }
 
@@ -208,12 +207,11 @@
                 
                 startSirenCheck();
                 updateTicker(gColumnData); 
-                updateTitleTheme(); // 타이틀 테마 갱신 호출
+                updateTitleTheme();
                 document.getElementById('update-time').innerText = new Date().toLocaleTimeString('ko-KR', { hour12: false }) + " 업데이트";
             } catch (e) { console.error(e); }
         }
 
-        /* --- 업그레이드된 타이틀 테마 제어 로직 --- */
         function updateTitleTheme() {
             if (currentData.c.length === 0) return;
             const avg = currentData.c.reduce((a, b) => a + b, 0) / currentData.c.length;
