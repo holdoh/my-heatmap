@@ -174,12 +174,7 @@
                         finalP = liveCoinStore[t].p; finalC = liveCoinStore[t].c;
                     } else {
                         finalC = parseFloat(changeStr); if (isNaN(finalC)) finalC = 0;
-                        
-                        // [수정된 로직] 기준값을 1.0으로 조정하여 0.14(14%) 등을 정상 인식하도록 함
-                        if (Math.abs(finalC) < 1.0 && changeStr.includes('.')) {
-                            finalC *= 100;
-                        }
-                        
+                        if (Math.abs(finalC) < 1.0 && changeStr.includes('.')) { finalC *= 100; }
                         finalP = parseFloat(priceStr.replace(/,/g, ''));
                     }
 
@@ -235,27 +230,45 @@
 
         function updateTicker(gData) {
             const wrapper = document.getElementById('ticker-wrapper');
+            if (!gData || gData.length < 5) return; 
+
             const hourIdx = new Date().getHours() % 10;
             let html = "";
             html += `<span class="ticker-item">🐯 <span class="ticker-hl">호랑의 투자 원칙 :</span> <span class="ticker-val">장기 투자! 분산 투자! 분할 매수! 적립식 매수! 공포에 사라!</span></span>`;
             html += `<span class="ticker-item">📜 <span class="ticker-mint">오늘의 격언:</span> <span class="ticker-val">${investmentQuotes[hourIdx]}</span></span>`;
             html += `<span class="ticker-item">💡 <span class="ticker-mint">오늘의 한마디:</span> <span class="ticker-val">${hourlyWits[hourIdx]}</span></span>`;
-            html += `<span class="ticker-item">🎭 <span class="ticker-label" style="color: #00FF00;">공포 탐욕 지수:</span> <span class="ticker-hl">${formatTickerVal(fgiText)}</span></span>`;
+            html += `<span class="ticker-item">🎭 <span style="color: #00FF00;">공포 탐욕 지수:</span> <span class="ticker-hl">${fgiText}</span></span>`;
             
             const labels = ["USD/KRW", "S&P 500", "다우존스", "나스닥 100", "KODEX 코스피 200", "KODEX 코스닥 150", "변동성 지수"];
-            for(let i=0; i<7; i++) { 
-                let item = gData[i+6]; if(!item || !item.g) continue;
-                let currP = parseFloat(item.g.replace(/[^0-9.-]+/g, ""));
-                let prevP = parseFloat(item.h.replace(/[^0-9.-]+/g, ""));
-                if(!isNaN(currP) && !isNaN(prevP) && prevP !== 0) {
-                    let diff = currP - prevP; let rate = (diff / prevP) * 100;
+            
+            for(let i=0; i<labels.length; i++) { 
+                let item = gData[i+6]; 
+                if(!item || !item.g || item.g === "" || item.g === ",") continue; 
+
+                let currRaw = item.g.replace(/[^0-9.-]+/g, "");
+                let prevRaw = item.h ? item.h.replace(/[^0-9.-]+/g, "") : "";
+                
+                let currP = parseFloat(currRaw);
+                let prevP = parseFloat(prevRaw);
+
+                if(!isNaN(currP)) {
+                    let diff = (!isNaN(prevP) && prevP !== 0) ? currP - prevP : 0;
+                    let rate = (!isNaN(prevP) && prevP !== 0) ? (diff / prevP) * 100 : 0;
                     let arrow = diff > 0 ? "▲" : (diff < 0 ? "▼" : "-");
                     let trendClass = diff > 0 ? "up" : (diff < 0 ? "down" : "");
-                    html += `<span class="ticker-item"><span class="ticker-hl">${labels[i]}:</span> <span class="ticker-val">${formatTickerVal(currP)}</span> <span class="${trendClass}" style="margin-left: 3px; font-size: 11px;">${arrow} ${rate.toFixed(2)}%</span></span>`;
+                    
+                    html += `<span class="ticker-item"><span class="ticker-hl">${labels[i]}:</span> <span class="ticker-val">${formatTickerVal(currP)}</span>`;
+                    if (prevP !== 0) {
+                        html += ` <span class="${trendClass}" style="margin-left: 3px; font-size: 11px;">${arrow} ${rate.toFixed(2)}%</span>`;
+                    }
+                    html += `</span>`;
                 }
             }
+
             for(let i=0; i<5; i++) { 
-                if(gData[i] && gData[i].g && gData[i].g !== ",") { html += `<span class="ticker-item">📢 <span class="ticker-val">${gData[i].g}</span></span>`; }
+                if(gData[i] && gData[i].g && gData[i].g.trim() !== "" && gData[i].g !== ",") { 
+                    html += `<span class="ticker-item">📢 <span class="ticker-val">${gData[i].g}</span></span>`; 
+                }
             }
             wrapper.innerHTML = html + html;
         }
