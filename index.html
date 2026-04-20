@@ -178,7 +178,7 @@
                         finalP = parseFloat(priceStr.replace(/,/g, ''));
                     }
 
-                    let sign = (ticker.toUpperCase().includes('KRX') || /^[0-9]/.test(ticker) || ["비트코인", "리플", "이더리움"].some(n => name.includes(n))) ? "₩" : "$";
+                    let sign = (ticker.toUpperCase().includes('KRX') || /^[0-9]/.test(ticker) || ["비트코인", "리플", "이더리움", "트론"].some(n => name.includes(n))) ? "₩" : "$";
                     nextL.push(`<b>${name}</b><br>${isNaN(finalP) ? priceStr : sign + finalP.toLocaleString()}<br>${finalC.toFixed(2)}%`);
                     nextC.push(finalC);
                     nextV.push(Math.max(Math.abs(finalC), 0.5));
