@@ -184,7 +184,7 @@
                     nextV.push(Math.max(Math.abs(finalC), 0.5));
                     
                     const isGoldSilverExact = (name === "금" || name === "은");
-                    const isSpecialYellow = ["비트코인", "이더리움", "리플", "트론", "MAGS", "QQQ", "RUSSELL 2000", "S&P 500", "SOXL", "TOPW", "FNGU", "SMIN", "UFO", "JEPI", "JEPQ", "코2타위커"].some(n => name.includes(n));
+                    const isSpecialYellow = ["비트코인", "이더리움", "리플", "트론", "MAGS", "QQQ", "RUSSELL 2000", "S&P 500", "SOXL", "TOPW", "FNGU", "SMIN", "UFO", "JEPI", "JEPQ", "코2타위커", "SPYI", "QQQI"].some(n => name.includes(n));
                     
                     nextFC.push((isGoldSilverExact || isSpecialYellow) ? "#FFFF00" : (finalC > 0.5 ? "#FFDADA" : (finalC < -0.5 ? "#DADAFF" : "#FFFFFF")));
                     nextN.push(name); nextT.push(ticker);
@@ -192,7 +192,7 @@
                     if (name === "SOXL"|| name === "FNGU") { nextBC.push("#FF8C00"); nextBW.push(6); }
                     else if (["비트코인", "리플", "이더리움", "트론"].some(n => n === name)) { nextBC.push("#00FF00"); nextBW.push(6); }
                     else if (isGoldSilverExact) { nextBC.push("#FFFF00"); nextBW.push(6); }
-                    else if (["MAGS", "S&P 500", "QQQ", "RUSSELL 2000", "TOPW", "SMIN", "UFO", "JEPI", "JEPQ", "코2타위커"].some(nameContains => name.includes(nameContains))) { nextBC.push("#FFB300"); nextBW.push(6); }
+                    else if (["MAGS", "S&P 500", "QQQ", "RUSSELL 2000", "TOPW", "SMIN", "UFO", "JEPI", "JEPQ", "코2타위커", "SPYI", "QQQI"].some(nameContains => name.includes(nameContains))) { nextBC.push("#FFB300"); nextBW.push(6); }
                     else { nextBC.push("#FFFFFF"); nextBW.push(1); }
                 }
 
