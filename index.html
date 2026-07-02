@@ -29,7 +29,7 @@
             background: linear-gradient(45deg, #ff0000, #ff8c00, #ff0000) !important;
             background-size: 200% 200% !important;
             animation: fire-ani 3s ease infinite;
-            color: #fff; text-shadow: 0 0 10px #ffff00, 0 0 20px #ff4d4d;
+            color: #fff; text-shadow: 0 0 10px #ffd700, 0 0 20px #ff4d4d;
             border-bottom: 3px solid #ffd700 !important;
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
         }
@@ -178,7 +178,15 @@
                         finalP = parseFloat(priceStr.replace(/,/g, ''));
                     }
 
-                    let sign = (ticker.toUpperCase().includes('KRX') || /^[0-9]/.test(ticker) || ["비트코인", "리플", "이더리움", "트론"].some(n => name.includes(n))) ? "₩" : "$";
+                    // --- [통화 기호 판별 처리 구역 수정] ---
+                    let sign = "$"; // 기본형은 달러($)
+                    if (name.includes("키옥시아") || ticker.toUpperCase().includes("285A.T")) {
+                        sign = "¥";  // 키옥시아 전용 엔화 기호 최우선 부여
+                    } else if (ticker.toUpperCase().includes('KRX') || /^[0-9]/.test(ticker) || ["비트코인", "리플", "이더리움", "트론"].some(n => name.includes(n))) {
+                        sign = "₩";  // 한국 종목 및 가상자산은 원화 기호 부여
+                    }
+                    // ----------------------------------------
+
                     nextL.push(`<b>${name}</b><br>${isNaN(finalP) ? priceStr : sign + finalP.toLocaleString()}<br>${finalC.toFixed(2)}%`);
                     nextC.push(finalC);
                     nextV.push(Math.max(Math.abs(finalC), 0.5));
